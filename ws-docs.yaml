@@ -1,0 +1,179 @@
+asyncapi: 3.0.0
+
+info:
+  title: Azimut Websocket API
+  version: 1.0.0
+  description: >
+    Websocket docs for azimut API
+
+servers:
+  public:
+    host: $DOMAIN:8000/ws
+    protocol: ws
+
+components:
+
+  messages:
+    callbackData:
+      payload:
+        $ref: '#/components/schemas/Callback'
+
+  schemas:
+    PolygonGeometry:
+      type: object
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          const: 'Polygon'
+        coordinates:
+          type: array
+          items:
+            type: array
+            items:
+              type: array
+              maxItems: 2
+              minItems: 2
+              items:
+                type: integer
+
+    PolygonProperties:
+      type: object
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+        antimeridian_crossing:
+          type: boolean
+
+    PolygonIntersectionProperties:
+      type: object
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+        antimeridian_crossing:
+          type: boolean
+        edited_polygon_id:
+          type: integer
+        intersection_polygon_ids:
+          type: array
+          items:
+            type: integer
+
+    PolygonFeature:
+      type: object
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          const: 'Feature'
+        geometry:
+          $ref: '#/components/schemas/PolygonGeometry'
+        properties:
+          $ref: '#/components/schemas/PolygonProperties'
+      description: >-
+        Polygon in GeoJson format (Feature). Required for status `0` with types `new_polygon_status` and `edit_polygon_status`
+
+    PolygonIntersectionFeature:
+      type: object
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          const: 'Feature'
+        geometry:
+          $ref: '#/components/schemas/PolygonGeometry'
+        properties:
+          $ref: '#/components/schemas/PolygonIntersectionProperties'
+      description: >-
+        Polygon in GeoJson format (Feature). Required for status `-4`
+
+    Callback:
+      examples:
+        - message:
+            type: new_polygon_status
+            uuid: a776cfa1-9159-406b-9754-c813495750c0
+            status: 0
+            intersection_polygon_ids: null
+            polygon:
+              type: Feature
+              geometry:
+                type: Polygon
+                coordinates: [[[0, 0], [1, 1], [3, 3], [0, 0]]]
+              properties:
+                name: Example1
+                antimeridian_crossing: false
+            polygon_id: null
+      additionalProperties: false
+      type: object
+      description: >-
+        Callback for all operation
+      required:
+        - message
+      properties:
+        message:
+          additionalProperties: false
+          required:
+            - type
+            - uuid
+            - status
+          type: object
+          description: >-
+            zero
+          properties:
+            type:
+              type: string
+              enum:
+                - 'new_polygon_status'
+                - 'delete_polygon_status'
+                - 'edit_polygon_status'
+            uuid:
+              type: string
+              description: >-
+                UUID4 for callbacks (generated in browser)
+            status:
+              type: integer
+              enum:
+                - -7
+                - -6
+                - -5
+                - -4
+                - -3
+                - -2
+                - -1
+                - 0
+                - 1
+                - 2
+
+              description: |
+                | Value  | Description |
+                | ------ | ----------- |
+                | -7     | Unknown error while deleting
+                | -6     | Nothing found to delete
+                | -5     | Unknown error while adding polygon to DB
+                | -4     | Intersection exist
+                | -3     | Error while checking intersections
+                | -2     | Error when sending task to backend2
+                | -1     | Don't pass base validation
+                | 0     | Success
+                | 1     | The basic polygon check has been completed
+                | 2     | No intersections detected
+            intersection_polygon_ids:
+              type: array
+              items:
+                type: integer
+              description: >-
+                ID of polygons with which there is an intersection. Required for status `-4`
+            polygon:
+              $ref: '#/components/schemas/PolygonFeature'
+            polygon_intersection:
+              $ref: '#/components/schemas/PolygonIntersectionFeature'
+            polygon_id:
+              type: integer
+              description: >-
+                Polygon ID to delete from map. Required for status `0` with type `delete_polygon_status`
+            editing_polygon_id:
+              type: integer
+              description: >-
+                Polygon ID to edit. Required for status `0` with type `edit_polygon_status`

@@ -1,0 +1,9 @@
+{
+  "name": "ws-docs",
+  "scripts": {
+    "build": "PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true asyncapi generate fromTemplate ws-docs.yaml -o ./dist @asyncapi/html-template@3.0.0 --use-new-generator --force-write"
+  },
+  "dependencies": {
+    "@asyncapi/cli": "2.16.0"
+  }
+}
